@@ -2,6 +2,7 @@ package note
 
 import (
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type NoteList []*Note
 
 type MemoryStorage struct {
 	memory map[int]NoteList
+	mu     sync.RWMutex
 }
 
 func NewMemoryStorage() *MemoryStorage {
@@ -21,6 +23,9 @@ func NewMemoryStorage() *MemoryStorage {
 }
 
 func (s *MemoryStorage) GetAllOfUser(uid int) []*Note {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	notes, ok := s.memory[uid]
 	if !ok {
 		return make([]*Note, 0)
@@ -29,6 +34,9 @@ func (s *MemoryStorage) GetAllOfUser(uid int) []*Note {
 }
 
 func (s *MemoryStorage) Create(text string, uid int) (*Note, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	note := &Note{
 		Id:        rand.Intn(10000),
 		Text:      text,
